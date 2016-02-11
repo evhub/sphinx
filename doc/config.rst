@@ -96,11 +96,8 @@ General configuration
 
    If given, a dictionary of parser classes for different source suffices.  The
    keys are the suffix, the values can be either a class or a string giving a
-   fully-qualified name of a parser class.  The parser class can be either
-   ``docutils.parsers.Parser`` or :class:`sphinx.parsers.Parser`.  Files with a
-   suffix that is not in the dictionary will be parsed with the default
-   reStructuredText parser.
-
+   fully-qualified name of a parser class.  Files with a suffix that is not in
+   the dictionary will be parsed with the default reStructuredText parser.
 
    For example::
 
@@ -131,7 +128,7 @@ General configuration
      :confval:`exclude_dirnames`)
 
    :confval:`exclude_patterns` is also consulted when looking for static files
-   in :confval:`html_static_path` and :confval:`html_extra_path`.
+   in :confval:`html_static_path`.
 
    .. versionadded:: 1.0
 
@@ -220,9 +217,6 @@ General configuration
 
    .. versionadded:: 1.0
 
-   .. versionchanged:: 1.4
-      also accepts micro version string
-
 .. confval:: needs_extensions
 
    This value can be a dictionary specifying version requirements for extensions
@@ -256,7 +250,7 @@ General configuration
 .. confval:: numfig
 
    If true, figures, tables and code-blocks are automatically numbered if they
-   have a caption. For now, it works only with the HTML builder. Default is ``False``.
+   has caption. For now, it works only with the HTML builder. Default is ``False``.
 
    .. versionadded:: 1.3
 
@@ -571,7 +565,8 @@ that use Sphinx's HTMLWriter class.
    The "title" for HTML documentation generated with Sphinx's own templates.
    This is appended to the ``<title>`` tag of individual pages, and used in the
    navigation bar as the "topmost" element.  It defaults to :samp:`'{<project>}
-   v{<revision>} documentation'`.
+   v{<revision>} documentation'` (with the values coming from the config
+   values).
 
 .. confval:: html_short_title
 
@@ -640,17 +635,11 @@ that use Sphinx's HTMLWriter class.
 
    .. versionadded:: 1.2
 
-   .. versionchanged:: 1.4
-      The dotfiles in the extra directory will be copied to the output directory.
-      And it refers :confval:`exclude_patterns` on copying extra files and
-      directories, and ignores if path matches to patterns.
-
 .. confval:: html_last_updated_fmt
 
-   If this is not None, a 'Last updated on:' timestamp is inserted
-   at every page bottom, using the given :func:`strftime` format.
-   The empty string is equivalent to ``'%b %d, %Y'`` (or a
-   locale-dependent equivalent).
+   If this is not the empty string, a 'Last updated on:' timestamp is inserted
+   at every page bottom, using the given :func:`strftime` format.  Default is
+   ``'%b %d, %Y'`` (or a locale-dependent equivalent).
 
 .. confval:: html_use_smartypants
 
@@ -884,7 +873,6 @@ that use Sphinx's HTMLWriter class.
    * ``es`` -- Spanish
    * ``sv`` -- Swedish
    * ``tr`` -- Turkish
-   * ``zh`` -- Chinese
 
    .. admonition:: Accelerating build speed
 
@@ -918,12 +906,6 @@ that use Sphinx's HTMLWriter class.
      Python binding is not installed
 
    .. versionadded:: 1.1
-
-
-   The Chinese support has these options:
-
-   * ``dict``  -- the ``jieba`` dictionary path if want to use
-     custom dictionary.
 
 .. confval:: html_search_scorer
 
@@ -1145,24 +1127,10 @@ the `Dublin Core metadata <http://dublincore.org/>`_.
    The title of the document.  It defaults to the :confval:`html_title` option
    but can be set independently for epub creation.
 
-.. confval:: epub3_description
-
-   The description of the document. The default value is ``''``.
-
-   .. versionadded:: 1.4
-
 .. confval:: epub_author
 
    The author of the document.  This is put in the Dublin Core metadata.  The
    default value is ``'unknown'``.
-
-.. confval:: epub3_contributor
-
-   The name of a person, organization, etc. that played a secondary role in
-   the creation of the content of an EPUB Publication. The default value is
-   ``'unknown'``.
-
-   .. versionadded:: 1.4
 
 .. confval:: epub_language
 
@@ -1318,14 +1286,6 @@ the `Dublin Core metadata <http://dublincore.org/>`_.
    creation.
 
    .. versionadded:: 1.2
-
-.. confval:: epub3_page_progression_direction
-
-   The global direction in which the content flows.
-   Allowed values are ltr (left-to-right), rtl (right-to-left) and default.
-   The default value is ``'ltr'``.
-
-   .. versionadded:: 1.4
 
 .. _latex-options:
 
@@ -1490,9 +1450,6 @@ These options influence LaTeX output.
      ``'maketitle'``
         "maketitle" call, default ``'\\maketitle'``.  Override if you want to
         generate a differently-styled title page.
-     ``'releasename'``
-        value that prefixes ``'release'`` element on title page, default
-        ``'Release'``.
      ``'tableofcontents'``
         "tableofcontents" call, default ``'\\tableofcontents'``.  Override if
         you want to generate a different table of contents or put content
@@ -1518,6 +1475,7 @@ These options influence LaTeX output.
      ``'release'``
      ``'author'``
      ``'logo'``
+     ``'releasename'``
      ``'makeindex'``
      ``'shorthandoff'``
 

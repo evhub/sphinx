@@ -15,17 +15,10 @@
 \RequirePackage{titlesec}
 \RequirePackage{tabulary}
 \RequirePackage{amsmath} % for \text
-\RequirePackage{amssymb} % for some symbols
 \RequirePackage{makeidx}
 \RequirePackage{framed}
 \RequirePackage{ifthen}
-%The xcolor package draws better fcolorboxes
-%around verbatim code
-\IfFileExists{xcolor.sty}{
-    \RequirePackage[xcdraw]{xcolor}
-}{
-    \RequirePackage{color}
-}
+\RequirePackage{color}
 % For highlighted code.
 \RequirePackage{fancyvrb}
 % For table captions.
@@ -58,12 +51,18 @@
 %\renewcommand{\paperwidth}{7in}     % O'Reilly ``Programmming Python''
 
 % use pdfoutput for pTeX and dvipdfmx
-% when pTeX (\kanjiskip is defined), set pdfoutput to evade \include{pdfcolor}
 \ifx\kanjiskip\undefined\else
-  \newcount\pdfoutput\pdfoutput=0
+  \ifx\Gin@driver{dvipdfmx.def}\undefined\else
+    \newcount\pdfoutput\pdfoutput=0
+  \fi
 \fi
 
-\RequirePackage{graphicx}
+% For graphicx, check if we are compiling under latex or pdflatex.
+\ifx\pdftexversion\undefined
+  \usepackage{graphicx}
+\else
+  \usepackage[pdftex]{graphicx}
+\fi
 
 % for PDF output, use colors and maximal compression
 \newif\ifsphinxpdfoutput\sphinxpdfoutputfalse
@@ -444,18 +443,15 @@
 \RequirePackage{hypcap}
 
 % From docutils.writers.latex2e
-% inline markup (custom roles)
-% \DUrole{#1}{#2} tries \DUrole#1{#2}
-\providecommand*{\DUrole}[2]{%
-  \ifcsname DUrole#1\endcsname%
-    \csname DUrole#1\endcsname{#2}%
-  \else% backwards compatibility: try \docutilsrole#1{#2}
-    \ifcsname docutilsrole#1\endcsname%
-      \csname docutilsrole#1\endcsname{#2}%
-    \else%
-      #2%
+\providecommand{\DUspan}[2]{%
+  {% group ("span") to limit the scope of styling commands
+    \@for\node@class@name:=#1\do{%
+    \ifcsname docutilsrole\node@class@name\endcsname%
+      \csname docutilsrole\node@class@name\endcsname%
     \fi%
-  \fi%
+    }%
+    {#2}% node content
+  }% close "span"
 }
 
 \providecommand*{\DUprovidelength}[2]{

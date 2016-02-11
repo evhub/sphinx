@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 from __future__ import print_function
-from __future__ import absolute_import
 
 import re
 import os
@@ -61,7 +60,7 @@ DEFAULT_VALUE = {
 }
 
 EXTENSIONS = ('autodoc', 'doctest', 'intersphinx', 'todo', 'coverage',
-              'imgmath', 'mathjax', 'ifconfig', 'viewcode', 'githubpages')
+              'pngmath', 'mathjax', 'ifconfig', 'viewcode')
 
 PROMPT_PREFIX = '> '
 
@@ -147,7 +146,6 @@ language = %(language)r
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-# This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = [%(exclude_patterns)s]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -192,9 +190,9 @@ html_theme = 'alabaster'
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 
-# The name for this set of Sphinx documents.
-# "<project> v<release> documentation" by default.
-#html_title = u'%(project_str)s v%(release_str)s'
+# The name for this set of Sphinx documents.  If None, it defaults to
+# "<project> v<release> documentation".
+#html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -218,10 +216,9 @@ html_static_path = ['%(dot)sstatic']
 # directly to the root of the documentation.
 #html_extra_path = []
 
-# If not None, a 'Last updated on:' timestamp is inserted at every page
-# bottom, using the given strftime format.
-# The empty string is equivalent to '%%b %%d, %%Y'.
-#html_last_updated_fmt = None
+# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
+# using the given strftime format.
+#html_last_updated_fmt = '%%b %%d, %%Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -263,12 +260,11 @@ html_static_path = ['%(dot)sstatic']
 # Language to be used for generating the HTML full-text search index.
 # Sphinx supports the following languages:
 #   'da', 'de', 'en', 'es', 'fi', 'fr', 'hu', 'it', 'ja'
-#   'nl', 'no', 'pt', 'ro', 'ru', 'sv', 'tr', 'zh'
+#   'nl', 'no', 'pt', 'ro', 'ru', 'sv', 'tr'
 #html_search_language = 'en'
 
 # A dictionary with options for the search language support, empty by default.
-# 'ja' uses this config value.
-# 'zh' user can custom change `jieba` dictionary path.
+# Now only 'ja' uses this config value
 #html_search_options = {'type': 'default'}
 
 # The name of a javascript file (relative to the configuration directory) that
@@ -475,12 +471,12 @@ BUILDDIR      = %(rbuilddir)s
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
-\t$(error \
+$(error \
 The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx \
 installed, then set the SPHINXBUILD environment variable to point \
 to the full path of the '$(SPHINXBUILD)' executable. Alternatively you \
 can add the directory with the executable to your PATH. \
-If you don\\'t have Sphinx installed, grab it from http://sphinx-doc.org/)
+If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
 endif
 
 # Internal variables.
@@ -504,7 +500,6 @@ help:
 \t@echo "  applehelp  to make an Apple Help Book"
 \t@echo "  devhelp    to make HTML files and a Devhelp project"
 \t@echo "  epub       to make an epub"
-\t@echo "  epub3      to make an epub3"
 \t@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 \t@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
 \t@echo "  latexpdfja to make LaTeX files and run them through platex/dvipdfmx"
@@ -597,12 +592,6 @@ epub:
 \t$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
 \t@echo
 \t@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
-
-.PHONY: epub3
-epub3:
-\t$(SPHINXBUILD) -b epub3 $(ALLSPHINXOPTS) $(BUILDDIR)/epub3
-\t@echo
-\t@echo "Build finished. The epub3 file is in $(BUILDDIR)/epub3."
 
 .PHONY: latex
 latex:
@@ -727,7 +716,6 @@ if "%%1" == "help" (
 \techo.  qthelp     to make HTML files and a qthelp project
 \techo.  devhelp    to make HTML files and a Devhelp project
 \techo.  epub       to make an epub
-\techo.  epub3      to make an epub3
 \techo.  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter
 \techo.  text       to make text files
 \techo.  man        to make manual pages
@@ -847,14 +835,6 @@ if "%%1" == "epub" (
 \tif errorlevel 1 exit /b 1
 \techo.
 \techo.Build finished. The epub file is in %%BUILDDIR%%/epub.
-\tgoto end
-)
-
-if "%%1" == "epub3" (
-\t%%SPHINXBUILD%% -b epub3 %%ALLSPHINXOPTS%% %%BUILDDIR%%/epub3
-\tif errorlevel 1 exit /b 1
-\techo.
-\techo.Build finished. The epub3 file is in %%BUILDDIR%%/epub3.
 \tgoto end
 )
 
@@ -1297,25 +1277,22 @@ Please indicate if you want to use one of the following Sphinx extensions:''')
     if 'ext_coverage' not in d:
         do_prompt(d, 'ext_coverage', 'coverage: checks for documentation '
                   'coverage (y/n)', 'n', boolean)
-    if 'ext_imgmath' not in d:
-        do_prompt(d, 'ext_imgmath', 'imgmath: include math, rendered '
-                  'as PNG or SVG images (y/n)', 'n', boolean)
+    if 'ext_pngmath' not in d:
+        do_prompt(d, 'ext_pngmath', 'pngmath: include math, rendered '
+                  'as PNG images (y/n)', 'n', boolean)
     if 'ext_mathjax' not in d:
         do_prompt(d, 'ext_mathjax', 'mathjax: include math, rendered in the '
                   'browser by MathJax (y/n)', 'n', boolean)
-    if d['ext_imgmath'] and d['ext_mathjax']:
-        print('''Note: imgmath and mathjax cannot be enabled at the same time.
-imgmath has been deselected.''')
-        d['ext_imgmath'] = False
+    if d['ext_pngmath'] and d['ext_mathjax']:
+        print('''Note: pngmath and mathjax cannot be enabled at the same time.
+pngmath has been deselected.''')
+        d['ext_pngmath'] = False
     if 'ext_ifconfig' not in d:
         do_prompt(d, 'ext_ifconfig', 'ifconfig: conditional inclusion of '
                   'content based on config values (y/n)', 'n', boolean)
     if 'ext_viewcode' not in d:
         do_prompt(d, 'ext_viewcode', 'viewcode: include links to the source '
                   'code of documented Python objects (y/n)', 'n', boolean)
-    if 'ext_githubpages' not in d:
-        do_prompt(d, 'ext_githubpages', 'githubpages: create .nojekyll file '
-                  'to publish the document on GitHub pages (y/n)', 'n', boolean)
 
     if 'no_makefile' in d:
         d['makefile'] = False
@@ -1382,11 +1359,7 @@ def generate(d, overwrite=True, silent=False):
         d['exclude_patterns'] = ''
     else:
         builddir = path.join(srcdir, d['dot'] + 'build')
-        exclude_patterns = map(repr, [
-            d['dot'] + 'build',
-            'Thumbs.db', '.DS_Store',
-        ])
-        d['exclude_patterns'] = ', '.join(exclude_patterns)
+        d['exclude_patterns'] = repr(d['dot'] + 'build')
     mkdir_p(builddir)
     mkdir_p(path.join(srcdir, d['dot'] + 'templates'))
     mkdir_p(path.join(srcdir, d['dot'] + 'static'))

@@ -5,7 +5,6 @@ python:
   - "2.7"
   - "3.3"
   - "3.4"
-  - "3.5"
   - "pypy"
 env:
   - DOCUTILS=0.11
@@ -14,7 +13,4 @@ install:
   - pip install docutils==$DOCUTILS
   - pip install -r test-reqs.txt
 before_script: flake8
-script:
-
-  -  if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then make test-async; fi
-  -  if [[ $TRAVIS_PYTHON_VERSION != '3.5' ]]; then make test; fi
+script: make test

@@ -152,7 +152,7 @@ HTML_XPATH = {
         (".//a[@href='#grammar-token-try_stmt']"
             "[@class='reference internal']/code/span", '^statement$'),
         (".//a[@href='subdir/includes.html']"
-            "[@class='reference internal']/span", 'Including in subdir'),
+            "[@class='reference internal']/em", 'Including in subdir'),
         (".//a[@href='objects.html#cmdoption-python-c']"
             "[@class='reference internal']/code/span[@class='pre']", '-c'),
         # abbreviations
@@ -954,16 +954,3 @@ def test_jsmath(app, status, warning):
             'e^{ix} = \\cos x + i\\sin x</div>' in content)
     assert '<div class="math">\nn \\in \\mathbb N</div>' in content
     assert '<div class="math">\na + 1 &lt; b</div>' in content
-
-
-@with_app(buildername='html', testroot='html_extra_path')
-def test_html_extra_path(app, status, warning):
-    app.builder.build_all()
-
-    assert (app.outdir / '.htaccess').exists()
-    assert not (app.outdir / '.htpasswd').exists()
-    assert (app.outdir / 'API.html_t').exists()
-    assert (app.outdir / 'css/style.css').exists()
-    assert (app.outdir / 'rimg.png').exists()
-    assert not (app.outdir / '_build/index.html').exists()
-    assert (app.outdir / 'background.png').exists()

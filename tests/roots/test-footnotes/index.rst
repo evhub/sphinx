@@ -2,14 +2,6 @@
 test-footenotes
 ===============
 
-.. toctree::
-
-   bar
-   baz
-
-.. contents::
-   :local:
-
 The section with a reference to [AuthorYear]_
 =============================================
 

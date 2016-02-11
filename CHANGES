@@ -1,110 +1,3 @@
-Release 1.4 (in development)
-============================
-
-Incompatible changes
---------------------
-
-* Drop ``PorterStemmer`` package support. Use ``PyStemmer`` instead of ``PorterStemmer``
-  to accelerate stemming.
-* sphinx_rtd_theme has become optional. Please install it manually.
-  Refs #2087, #2086, #1845 and #2097. Thanks to Victor Zverovich.
-* #2231: Use DUrole instead of DUspan for custom roles in LaTeX writer. It enables to take
-  title of roles as an argument of custom macros.
-* #2022: 'Thumbs.db' and '.DS_Store' are added to `exclude_patterns` default values in
-  conf.py that will be provided on sphinx-quickstart.
-* #2027, #2208: The ``html_title`` accepts string values only. And The None value cannot be
-  accepted.
-* ``sphinx.ext.graphviz``: show graph image in inline by default
-* #2060, #2224: The ``manpage`` role now generate ``sphinx.addnodes.manpage`` node instead
-  of ``sphinx.addnodes.literal_emphasis`` node.
-* #2022: :confval:`html_extra_path` also copies dotfiles in the extra directory, and
-  refers to :confval:`exclude_patterns` to exclude extra files and directories.
-
-Features added
---------------
-
-* #2092: add todo directive support in napoleon package.
-* #1962: when adding directives, roles or nodes from an extension, warn if such
-  an element is already present (built-in or added by another extension).
-* #1909: Add "doc" references to Intersphinx inventories.
-* C++ type alias support (e.g., ``.. type:: T = int``).
-* C++ template support for classes, functions, type aliases, and variables (#1729, #1314).
-* C++, added new scope management directives ``namespace-push`` and ``namespace-pop``.
-* #1970: Keyboard shortcuts to navigate Next and Previous topics
-* Intersphinx: Added support for fetching Intersphinx inventories with URLs
-  using HTTP basic auth.
-* C++, added support for template parameter in function info field lists.
-* C++, added support for pointers to member (function).
-* #2113: Allow ``:class:`` option to code-block directive.
-* #2192: Imgmath (pngmath with svg support).
-* #2200: Support XeTeX and LuaTeX for the LaTeX builder.
-* #1906: Use xcolor over color for \fcolorbox where available for LaTeX output.
-* #2216: Texinputs makefile improvements.
-* #2170: Support for Chinese language search index.
-* #2214: Add sphinx.ext.githubpages to publish the docs on GitHub Pages
-* #1030: Make page reference names for latex_show_pagerefs translatable
-* #2162: Add Sphinx.add_source_parser() to add source_suffix and source_parsers from extension
-* #2207: Add sphinx.parsers.Parser class; a base class for new parsers
-* #656: Add ``graphviz_dot`` option to graphviz directives to switch the ``dot`` command
-* #1939: Added the ``dummy`` builder: syntax check without output.
-* #2230: Add ``math_number_all`` option to number all displayed math in math extensions
-* #2235: ``needs_sphinx`` supports micro version comparison
-* #2282: Add "language" attribute to html tag in the "basic" theme
-* #1779: Add EPUB 3 builder
-* #1751: Add :confval:`todo_link_only` to avoid file path and line indication on
-  :rst:dir:`todolist`. Thanks to Francesco Montesano.
-* #2199: Use ``imagesize`` package to obtain size of images
-
-Bugs fixed
-----------
-
-* #1913: C++, fix assert bug for enumerators in next-to-global and global scope.
-* C++, fix parsing of 'signed char' and 'unsigned char' as types.
-* C++, add missing support for 'friend' functions.
-* C++, add missing support for virtual base classes (thanks to Rapptz).
-* C++, add support for final classes.
-* C++, fix parsing of types prefixed with 'enum'.
-* #2023: Dutch search support uses Danish stemming info.
-* C++, add support for user-defined literals.
-* #1804: Now html output wraps overflowed long-line-text in the sidebar. Thanks to
-  Hassen ben tanfous.
-* #2183: Fix porterstemmer causes ``make json`` to fail.
-* #1899: Ensure list is sent to OptParse.
-* #2164: Fix wrong check for pdftex inside sphinx.sty (for graphicx package option).
-* #2165, #2218: Remove faulty and non-need conditional from sphinx.sty.
-* Fix broken LaTeX code is generated if unknown language is given
-* #1944: Fix rst_prolog breaks file-wide metadata
-* #2074: make gettext should use canonical relative paths for .pot. Thanks to
-  anatoly techtonik.
-
-Documentation
--------------
-
-* #1757: Fix for usage of :confval:`html_last_updated_fmt`. Thanks to Ralf Hemmecke.
-
-
-Release 1.3.6 (in development)
-==============================
-
-Features added
---------------
-
-* #1873, #1876, #2278: Add ``page_source_suffix`` html context variable. This should be
-  introduced with :confval:`source_parsers` feature. Thanks for Eric Holscher.
-
-
-Bugs fixed
-----------
-
-* #2265: Fix babel is used in spite of disabling it on ``latex_elements``
-* #2295: Avoid mutating dictionary errors while enumerating members in autodoc
-  with Python 3
-* #2291: Fix pdflatex "Counter too large" error from footnotes inside tables of contents
-* #2292: Fix some footnotes disappear from LaTeX output
-* #2287: ``sphinx.transforms.Locale`` always uses rst parser. Sphinx i18n feature should
-  support parsers that specified source_parsers.
-
-
 Release 1.3.5 (released Jan 24, 2016)
 =====================================
 
@@ -114,13 +7,12 @@ Bugs fixed
 * Fix line numbers was not shown on warnings in LaTeX and texinfo builders
 * Fix filenames were not shown on warnings of citations
 * Fix line numbers was not shown on warnings in LaTeX and texinfo builders
-* Fix line numbers was not shown on warnings of indices
-* #2026: Fix LaTeX builder raises error if parsed-literal includes links
+* Fix line numbers was not shown on warnings of indecies
+* #2026: Fix LaTeX builder rais error if parsed-literal includes links
 * #2243: Ignore strange docstring types for classes, do not crash
 * #2247: Fix #2205 breaks make html for definition list with classifiers
   that contains regular-expression like string
-* #1565: Sphinx will now emit a warning that highlighting was skipped if the syntax
-  is incorrect for `code-block`, `literalinclude` and so on.
+* #1565: Show warning if Pygments throws an ErrorToken
 * #2211: Fix paragraphs in table cell doesn't work in Latex output
 * #2253: ``:pyobject:`` option of ``literalinclude`` directive can't detect indented
   body block when the block starts with blank or comment lines.
@@ -135,7 +27,7 @@ Bugs fixed
 
 * #2134: Fix figure caption with reference causes latex build error
 * #2094: Fix rubric with reference not working in Latex
-* #2147: Fix literalinclude code in latex does not break in pages
+* #2147: Fix litralinclude code in latex does not break in pages
 * #1833: Fix email addresses is showed again if latex_show_urls is not None
 * #2176: sphinx.ext.graphviz: use <object> instead of <img> to embed svg
 * #967: Fix SVG inheritance diagram is not hyperlinked (clickable)
@@ -267,7 +159,6 @@ Bugs fixed
 * #2140: Fix footnotes in table has broken in LaTeX
 * #2127: MecabBinder for html searching feature doesn't work with Python 3.
   Thanks to Tomoko Uchida.
-
 
 Release 1.3.1 (released Mar 17, 2015)
 =====================================
@@ -743,7 +634,7 @@ Bugs fixed
   if they contain uppercase letters.
 * #923: Take the entire LaTeX document into account when caching
   pngmath-generated images.  This rebuilds them correctly when
-  ``pngmath_latex_preamble`` changes.
+  `pngmath_latex_preamble` changes.
 * #901: Emit a warning when using docutils' new "math" markup without a Sphinx
   math extension active.
 * #845: In code blocks, when the selected lexer fails, display line numbers
@@ -1361,7 +1252,7 @@ Features added
     indicators.
   - #367: Added automatic exclusion of hidden members in inheritance
     diagrams, and an option to selectively enable it.
-  - Added ``pngmath_add_tooltips``.
+  - Added `pngmath_add_tooltips`.
   - The math extension displaymath directives now support ``name`` in
     addition to ``label`` for giving the equation label, for compatibility
     with Docutils.

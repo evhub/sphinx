@@ -34,34 +34,6 @@ if PY3:
     LATEX_WARNINGS = remove_unicode_literals(LATEX_WARNINGS)
 
 
-def run_latex(outdir):
-    """Run pdflatex, xelatex, and lualatex in the outdir"""
-    cwd = os.getcwd()
-    os.chdir(outdir)
-    try:
-        latexes = ('pdflatex', 'xelatex', 'lualatex')
-        available_latexes = len(latexes)
-        for latex in latexes:
-            try:
-                os.mkdir(latex)
-                p = Popen([latex, '--interaction=nonstopmode',
-                        '-output-directory=%s' % latex, 'SphinxTests.tex'],
-                        stdout=PIPE, stderr=PIPE)
-            except OSError:  # most likely the latex executable was not found
-                available_latexes -= 1
-            else:
-                stdout, stderr = p.communicate()
-                if p.returncode != 0:
-                    print(stdout)
-                    print(stderr)
-                    assert False, '%s exited with return code %s' % (
-                        latex, p.returncode)
-    finally:
-        os.chdir(cwd)
-
-    if available_latexes == 0: # no latex is available, skip the test
-        raise SkipTest
-
 @with_app(buildername='latex', freshenv=True)  # use freshenv to check warnings
 def test_latex(app, status, warning):
     LaTeXTranslator.ignore_missing_images = True
@@ -103,7 +75,22 @@ def test_latex(app, status, warning):
                            'seem to be installed' % filename)
 
     # now, try to run latex over it
-    run_latex(app.outdir)
+    cwd = os.getcwd()
+    os.chdir(app.outdir)
+    try:
+        try:
+            p = Popen(['pdflatex', '--interaction=nonstopmode',
+                       'SphinxTests.tex'], stdout=PIPE, stderr=PIPE)
+        except OSError:
+            raise SkipTest  # most likely pdflatex was not found
+        else:
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                print(stdout)
+                print(stderr)
+                assert False, 'latex exited with return code %s' % p.returncode
+    finally:
+        os.chdir(cwd)
 
 
 @with_app(buildername='latex', freshenv=True,  # use freshenv to check warnings
@@ -152,7 +139,23 @@ def test_latex_howto(app, status, warning):
                            'seem to be installed' % filename)
 
     # now, try to run latex over it
-    run_latex(app.outdir)
+    cwd = os.getcwd()
+    os.chdir(app.outdir)
+    try:
+        try:
+            p = Popen(['pdflatex', '--interaction=nonstopmode',
+                       'SphinxTests.tex'], stdout=PIPE, stderr=PIPE)
+        except OSError:
+            raise SkipTest  # most likely pdflatex was not found
+        else:
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                print(stdout)
+                print(stderr)
+                app.cleanup()
+                assert False, 'latex exited with return code %s' % p.returncode
+    finally:
+        os.chdir(cwd)
 
 
 @with_app(buildername='latex', testroot='numfig',
@@ -264,25 +267,6 @@ def test_numref_with_language_ja(app, status, warning):
     assert '\\hyperref[baz:code22]{Code-\\ref{baz:code22}}' in result
 
 
-@with_app(buildername='latex', testroot='numfig',
-          confoverrides={'numfig': True, 'language': 'ru', 'latex_elements': {'babel': ''}})
-def test_numref_on_bable_disabled(app, status, warning):
-    app.builder.build_all()
-    result = (app.outdir / 'Python.tex').text(encoding='utf8')
-    print(result)
-    print(status.getvalue())
-    print(warning.getvalue())
-    assert '\\renewcommand{\\figurename}{Fig. }' in result
-    assert '\\renewcommand{\\tablename}{Table }' in result
-    assert '\\SetupFloatingEnvironment{literal-block}{name=Listing }' in result
-    assert '\\hyperref[index:fig1]{Fig. \\ref{index:fig1}}' in result
-    assert '\\hyperref[baz:fig22]{Figure\\ref{baz:fig22}}' in result
-    assert '\\hyperref[index:table-1]{Table \\ref{index:table-1}}' in result
-    assert '\\hyperref[baz:table22]{Table:\\ref{baz:table22}}' in result
-    assert '\\hyperref[index:code-1]{Listing \\ref{index:code-1}}' in result
-    assert '\\hyperref[baz:code22]{Code-\\ref{baz:code22}}' in result
-
-
 @with_app(buildername='latex')
 def test_latex_add_latex_package(app, status, warning):
     app.add_latex_package('foo')
@@ -293,99 +277,26 @@ def test_latex_add_latex_package(app, status, warning):
     assert '\\usepackage[baz]{bar}' in result
 
 
-@with_app(buildername='latex', testroot='latex-babel')
-def test_babel_with_no_language_settings(app, status, warning):
+@with_app(buildername='latex', testroot='contentsname')
+def test_contentsname(app, status, warning):
     app.builder.build_all()
     result = (app.outdir / 'Python.tex').text(encoding='utf8')
     print(result)
     print(status.getvalue())
     print(warning.getvalue())
-    assert '\\documentclass[letterpaper,10pt,english]{sphinxmanual}' in result
-    assert '\\usepackage{babel}' in result
-    assert '\\usepackage{times}' in result
-    assert '\\usepackage[Bjarne]{fncychap}' in result
-    assert ('\\addto\\captionsenglish{\\renewcommand{\\contentsname}{Table of content}}\n'
+    assert ('\\addto\\captionsenglish{\\renewcommand{\\contentsname}{Table of content}}'
             in result)
-    assert '\\addto\\captionsenglish{\\renewcommand{\\figurename}{Fig. }}\n' in result
-    assert '\\addto\\captionsenglish{\\renewcommand{\\tablename}{Table. }}\n' in result
-    assert '\\addto\\extrasenglish{\\def\\pageautorefname{page}}\n' in result
 
 
-@with_app(buildername='latex', testroot='latex-babel',
-          confoverrides={'language': 'de'})
-def test_babel_with_language_de(app, status, warning):
-    app.builder.build_all()
-    result = (app.outdir / 'Python.tex').text(encoding='utf8')
-    print(result)
-    print(status.getvalue())
-    print(warning.getvalue())
-    assert '\\documentclass[letterpaper,10pt,ngerman]{sphinxmanual}' in result
-    assert '\\usepackage{babel}' in result
-    assert '\\usepackage{times}' in result
-    assert '\\usepackage[Sonny]{fncychap}' in result
-    assert ('\\addto\\captionsngerman{\\renewcommand{\\contentsname}{Table of content}}\n'
-            in result)
-    assert '\\addto\\captionsngerman{\\renewcommand{\\figurename}{Fig. }}\n' in result
-    assert '\\addto\\captionsngerman{\\renewcommand{\\tablename}{Table. }}\n' in result
-    assert '\\addto\\extrasngerman{\\def\\pageautorefname{page}}\n' in result
-
-
-@with_app(buildername='latex', testroot='latex-babel',
-          confoverrides={'language': 'ru'})
-def test_babel_with_language_ru(app, status, warning):
-    app.builder.build_all()
-    result = (app.outdir / 'Python.tex').text(encoding='utf8')
-    print(result)
-    print(status.getvalue())
-    print(warning.getvalue())
-    assert '\\documentclass[letterpaper,10pt,russian]{sphinxmanual}' in result
-    assert '\\usepackage{babel}' in result
-    assert '\\usepackage{times}' not in result
-    assert '\\usepackage[Sonny]{fncychap}' in result
-    assert ('\\addto\\captionsrussian{\\renewcommand{\\contentsname}{Table of content}}\n'
-            in result)
-    assert '\\addto\\captionsrussian{\\renewcommand{\\figurename}{Fig. }}\n' in result
-    assert '\\addto\\captionsrussian{\\renewcommand{\\tablename}{Table. }}\n' in result
-    assert '\\addto\\extrasrussian{\\def\\pageautorefname{page}}\n' in result
-
-
-@with_app(buildername='latex', testroot='latex-babel',
+@with_app(buildername='latex', testroot='contentsname',
           confoverrides={'language': 'ja'})
-def test_babel_with_language_ja(app, status, warning):
+def test_contentsname_with_language_ja(app, status, warning):
     app.builder.build_all()
     result = (app.outdir / 'Python.tex').text(encoding='utf8')
     print(result)
     print(status.getvalue())
     print(warning.getvalue())
-    assert '\\documentclass[letterpaper,10pt,dvipdfmx]{sphinxmanual}' in result
-    assert '\\usepackage{babel}' not in result
-    assert '\\usepackage{times}' in result
-    assert '\\usepackage[Sonny]{fncychap}' not in result
-    assert '\\renewcommand{\\contentsname}{Table of content}\n' in result
-    assert '\\renewcommand{\\figurename}{Fig. }\n' in result
-    assert '\\renewcommand{\\tablename}{Table. }\n' in result
-    assert '\\def\\pageautorefname{page}\n' in result
-
-
-@with_app(buildername='latex', testroot='latex-babel',
-          confoverrides={'language': 'unknown'})
-def test_babel_with_unknown_language(app, status, warning):
-    app.builder.build_all()
-    result = (app.outdir / 'Python.tex').text(encoding='utf8')
-    print(result)
-    print(status.getvalue())
-    print(warning.getvalue())
-    assert '\\documentclass[letterpaper,10pt,english]{sphinxmanual}' in result
-    assert '\\usepackage{babel}' in result
-    assert '\\usepackage{times}' in result
-    assert '\\usepackage[Sonny]{fncychap}' in result
-    assert ('\\addto\\captionsenglish{\\renewcommand{\\contentsname}{Table of content}}\n'
-            in result)
-    assert '\\addto\\captionsenglish{\\renewcommand{\\figurename}{Fig. }}\n' in result
-    assert '\\addto\\captionsenglish{\\renewcommand{\\tablename}{Table. }}\n' in result
-    assert '\\addto\\extrasenglish{\\def\\pageautorefname{page}}\n' in result
-
-    assert "WARNING: no Babel option known for language 'unknown'" in warning.getvalue()
+    assert '\\renewcommand{\\contentsname}{Table of content}' in result
 
 
 @with_app(buildername='latex')
@@ -442,15 +353,6 @@ def test_latex_show_urls_is_inline(app, status, warning):
     print(result)
     print(status.getvalue())
     print(warning.getvalue())
-    assert 'Same footnote number \\footnote[1]{\nfootnote in bar\n} in bar.rst' in result
-    assert 'Auto footnote number \\footnote[1]{\nfootnote in baz\n} in baz.rst' in result
-    assert ('\\phantomsection\\label{index:id26}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to\\string-authoryear]'
-            '{\\emph{The section with a reference to \\phantomsection\\label{index:id1}'
-            '{\\hyperref[index:authoryear]{\\emph{{[}AuthorYear{]}}}}}}}' in result)
-    assert ('\\phantomsection\\label{index:id27}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to]{\\emph{The section '
-            'with a reference to }}}' in result)
     assert 'First footnote: \\footnote[2]{\nFirst\n}' in result
     assert 'Second footnote: \\footnote[1]{\nSecond\n}' in result
     assert '\\href{http://sphinx-doc.org/}{Sphinx} (http://sphinx-doc.org/)' in result
@@ -477,29 +379,20 @@ def test_latex_show_urls_is_footnote(app, status, warning):
     print(result)
     print(status.getvalue())
     print(warning.getvalue())
-    assert 'Same footnote number \\footnote[1]{\nfootnote in bar\n} in bar.rst' in result
-    assert 'Auto footnote number \\footnote[2]{\nfootnote in baz\n} in baz.rst' in result
-    assert ('\\phantomsection\\label{index:id26}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to\\string-authoryear]'
-            '{\\emph{The section with a reference to \\phantomsection\\label{index:id1}'
-            '{\\hyperref[index:authoryear]{\\emph{{[}AuthorYear{]}}}}}}}' in result)
-    assert ('\\phantomsection\\label{index:id27}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to]{\\emph{The section '
-            'with a reference to }}}' in result)
-    assert 'First footnote: \\footnote[3]{\nFirst\n}' in result
+    assert 'First footnote: \\footnote[2]{\nFirst\n}' in result
     assert 'Second footnote: \\footnote[1]{\nSecond\n}' in result
     assert ('\\href{http://sphinx-doc.org/}{Sphinx}'
-            '\\footnote[4]{\nhttp://sphinx-doc.org/\n}' in result)
-    assert 'Third footnote: \\footnote[6]{\nThird\n}' in result
+            '\\footnote[3]{\nhttp://sphinx-doc.org/\n}' in result)
+    assert 'Third footnote: \\footnote[5]{\nThird\n}' in result
     assert ('\\href{http://sphinx-doc.org/~test/}{URL including tilde}'
-            '\\footnote[5]{\nhttp://sphinx-doc.org/\\textasciitilde{}test/\n}' in result)
-    assert ('\\item[{\\href{http://sphinx-doc.org/}{URL in term}\\protect\\footnotemark[8]}] '
-            '\\leavevmode\\footnotetext[8]{\nhttp://sphinx-doc.org/\n}\nDescription' in result)
-    assert ('\\item[{Footnote in term \\protect\\footnotemark[10]}] '
-            '\\leavevmode\\footnotetext[10]{\nFootnote in term\n}\nDescription' in result)
+            '\\footnote[4]{\nhttp://sphinx-doc.org/\\textasciitilde{}test/\n}' in result)
+    assert ('\\item[{\\href{http://sphinx-doc.org/}{URL in term}\\protect\\footnotemark[7]}] '
+            '\\leavevmode\\footnotetext[7]{\nhttp://sphinx-doc.org/\n}\nDescription' in result)
+    assert ('\\item[{Footnote in term \\protect\\footnotemark[9]}] '
+            '\\leavevmode\\footnotetext[9]{\nFootnote in term\n}\nDescription' in result)
     assert ('\\item[{\\href{http://sphinx-doc.org/}{Term in deflist}\\protect'
-            '\\footnotemark[9]}] '
-            '\\leavevmode\\footnotetext[9]{\nhttp://sphinx-doc.org/\n}\nDescription' in result)
+            '\\footnotemark[8]}] '
+            '\\leavevmode\\footnotetext[8]{\nhttp://sphinx-doc.org/\n}\nDescription' in result)
     assert ('\\href{https://github.com/sphinx-doc/sphinx}'
             '{https://github.com/sphinx-doc/sphinx}\n' in result)
     assert ('\\href{mailto:sphinx-dev@googlegroups.com}'
@@ -514,15 +407,6 @@ def test_latex_show_urls_is_no(app, status, warning):
     print(result)
     print(status.getvalue())
     print(warning.getvalue())
-    assert 'Same footnote number \\footnote[1]{\nfootnote in bar\n} in bar.rst' in result
-    assert 'Auto footnote number \\footnote[1]{\nfootnote in baz\n} in baz.rst' in result
-    assert ('\\phantomsection\\label{index:id26}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to\\string-authoryear]'
-            '{\\emph{The section with a reference to \\phantomsection\\label{index:id1}'
-            '{\\hyperref[index:authoryear]{\\emph{{[}AuthorYear{]}}}}}}}' in result)
-    assert ('\\phantomsection\\label{index:id27}{\\hyperref[index:the\\string-section'
-            '\\string-with\\string-a\\string-reference\\string-to]{\\emph{The section '
-            'with a reference to }}}' in result)
     assert 'First footnote: \\footnote[2]{\nFirst\n}' in result
     assert 'Second footnote: \\footnote[1]{\nSecond\n}' in result
     assert '\\href{http://sphinx-doc.org/}{Sphinx}' in result

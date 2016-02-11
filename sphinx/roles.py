@@ -29,7 +29,7 @@ generic_docroles = {
     'kbd': nodes.literal,
     'mailheader': addnodes.literal_emphasis,
     'makevar': addnodes.literal_strong,
-    'manpage': addnodes.manpage,
+    'manpage': addnodes.literal_emphasis,
     'mimetype': addnodes.literal_emphasis,
     'newsgroup': addnodes.literal_emphasis,
     'program': addnodes.literal_strong,  # XXX should be an x-ref
@@ -329,7 +329,7 @@ specific_docroles = {
     # links to download references
     'download': XRefRole(nodeclass=addnodes.download_reference),
     # links to documents
-    'doc': XRefRole(warn_dangling=True, innernodeclass=nodes.inline),
+    'doc': XRefRole(warn_dangling=True),
     # links to anything
     'any': AnyXRefRole(warn_dangling=True),
 

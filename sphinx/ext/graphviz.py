@@ -36,7 +36,7 @@ class GraphvizError(SphinxError):
     category = 'Graphviz error'
 
 
-class graphviz(nodes.General, nodes.Inline, nodes.Element):
+class graphviz(nodes.General, nodes.Element):
     pass
 
 
@@ -66,7 +66,6 @@ class Graphviz(Directive):
         'alt': directives.unchanged,
         'inline': directives.flag,
         'caption': directives.unchanged,
-        'graphviz_dot': directives.unchanged,
     }
 
     def run(self):
@@ -97,16 +96,13 @@ class Graphviz(Directive):
                     line=self.lineno)]
         node = graphviz()
         node['code'] = dotcode
-        node['options'] = {}
-        if 'graphviz_dot' in self.options:
-            node['options']['graphviz_dot'] = self.options['graphviz_dot']
+        node['options'] = []
         if 'alt' in self.options:
             node['alt'] = self.options['alt']
-        if 'inline' in self.options:
-            node['inline'] = True
+        node['inline'] = 'inline' in self.options
 
         caption = self.options.get('caption')
-        if caption:
+        if caption and not node['inline']:
             node = figure_wrapper(self, node, caption)
 
         return [node]
@@ -124,23 +120,19 @@ class GraphvizSimple(Directive):
         'alt': directives.unchanged,
         'inline': directives.flag,
         'caption': directives.unchanged,
-        'graphviz_dot': directives.unchanged,
     }
 
     def run(self):
         node = graphviz()
         node['code'] = '%s %s {\n%s\n}\n' % \
                        (self.name, self.arguments[0], '\n'.join(self.content))
-        node['options'] = {}
-        if 'graphviz_dot' in self.options:
-            node['options']['graphviz_dot'] = self.options['graphviz_dot']
+        node['options'] = []
         if 'alt' in self.options:
             node['alt'] = self.options['alt']
-        if 'inline' in self.options:
-            node['inline'] = True
+        node['inline'] = 'inline' in self.options
 
         caption = self.options.get('caption')
-        if caption:
+        if caption and not node['inline']:
             node = figure_wrapper(self, node, caption)
 
         return [node]
@@ -148,8 +140,8 @@ class GraphvizSimple(Directive):
 
 def render_dot(self, code, options, format, prefix='graphviz'):
     """Render graphviz code into a PNG or PDF output file."""
-    graphviz_dot = options.get('graphviz_dot', self.builder.config.graphviz_dot)
-    hashkey = (code + str(options) + str(graphviz_dot) +
+    hashkey = (code + str(options) +
+               str(self.builder.config.graphviz_dot) +
                str(self.builder.config.graphviz_dot_args)).encode('utf-8')
 
     fname = '%s-%s.%s' % (prefix, sha1(hashkey).hexdigest(), format)
@@ -159,8 +151,8 @@ def render_dot(self, code, options, format, prefix='graphviz'):
     if path.isfile(outfn):
         return relfn, outfn
 
-    if (hasattr(self.builder, '_graphviz_warned_dot') and
-       self.builder._graphviz_warned_dot.get(graphviz_dot)):
+    if hasattr(self.builder, '_graphviz_warned_dot') or \
+       hasattr(self.builder, '_graphviz_warned_ps2pdf'):
         return None, None
 
     ensuredir(path.dirname(outfn))
@@ -169,8 +161,9 @@ def render_dot(self, code, options, format, prefix='graphviz'):
     if isinstance(code, text_type):
         code = code.encode('utf-8')
 
-    dot_args = [graphviz_dot]
+    dot_args = [self.builder.config.graphviz_dot]
     dot_args.extend(self.builder.config.graphviz_dot_args)
+    dot_args.extend(options)
     dot_args.extend(['-T' + format, '-o' + outfn])
     if format == 'png':
         dot_args.extend(['-Tcmapx', '-o%s.map' % outfn])
@@ -180,10 +173,9 @@ def render_dot(self, code, options, format, prefix='graphviz'):
         if err.errno != ENOENT:   # No such file or directory
             raise
         self.builder.warn('dot command %r cannot be run (needed for graphviz '
-                          'output), check the graphviz_dot setting' % graphviz_dot)
-        if not hasattr(self.builder, '_graphviz_warned_dot'):
-            self.builder._graphviz_warned_dot = {}
-        self.builder._graphviz_warned_dot[graphviz_dot] = True
+                          'output), check the graphviz_dot setting' %
+                          self.builder.config.graphviz_dot)
+        self.builder._graphviz_warned_dot = True
         return None, None
     try:
         # Graphviz may close standard input when an error occurs,
@@ -205,15 +197,6 @@ def render_dot(self, code, options, format, prefix='graphviz'):
     return relfn, outfn
 
 
-def warn_for_deprecated_option(self, node):
-    if hasattr(self.builder, '_graphviz_warned_inline'):
-        return
-
-    if 'inline' in node:
-        self.builder.warn(':inline: option for graphviz is deprecated since version 1.4.0.')
-        self.builder._graphviz_warned_inline = True
-
-
 def render_dot_html(self, node, code, options, prefix='graphviz',
                     imgcls=None, alt=None):
     format = self.builder.config.graphviz_output_format
@@ -226,6 +209,13 @@ def render_dot_html(self, node, code, options, prefix='graphviz',
         self.builder.warn('dot code %r: ' % code + str(exc))
         raise nodes.SkipNode
 
+    inline = node.get('inline', False)
+    if inline:
+        wrapper = 'span'
+    else:
+        wrapper = 'p'
+
+    self.body.append(self.starttag(node, wrapper, CLASS='graphviz'))
     if fname is None:
         self.body.append(self.encode(code))
     else:
@@ -253,11 +243,11 @@ def render_dot_html(self, node, code, options, prefix='graphviz',
                                  (fname, alt, mapname, imgcss))
                 self.body.extend([item.decode('utf-8') for item in imgmap])
 
+    self.body.append('</%s>\n' % wrapper)
     raise nodes.SkipNode
 
 
 def html_visit_graphviz(self, node):
-    warn_for_deprecated_option(self, node)
     render_dot_html(self, node, node['code'], node['options'])
 
 
@@ -268,8 +258,8 @@ def render_dot_latex(self, node, code, options, prefix='graphviz'):
         self.builder.warn('dot code %r: ' % code + str(exc))
         raise nodes.SkipNode
 
-    is_inline = self.is_inline(node)
-    if is_inline:
+    inline = node.get('inline', False)
+    if inline:
         para_separator = ''
     else:
         para_separator = '\n'
@@ -281,7 +271,6 @@ def render_dot_latex(self, node, code, options, prefix='graphviz'):
 
 
 def latex_visit_graphviz(self, node):
-    warn_for_deprecated_option(self, node)
     render_dot_latex(self, node, node['code'], node['options'])
 
 
@@ -297,12 +286,10 @@ def render_dot_texinfo(self, node, code, options, prefix='graphviz'):
 
 
 def texinfo_visit_graphviz(self, node):
-    warn_for_deprecated_option(self, node)
     render_dot_texinfo(self, node, node['code'], node['options'])
 
 
 def text_visit_graphviz(self, node):
-    warn_for_deprecated_option(self, node)
     if 'alt' in node.attributes:
         self.add_text(_('[graph: %s]') % node['alt'])
     else:
@@ -311,7 +298,6 @@ def text_visit_graphviz(self, node):
 
 
 def man_visit_graphviz(self, node):
-    warn_for_deprecated_option(self, node)
     if 'alt' in node.attributes:
         self.body.append(_('[graph: %s]') % node['alt'])
     else:

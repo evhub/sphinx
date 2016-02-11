@@ -28,25 +28,20 @@ class eqref(nodes.Inline, nodes.TextElement):
     pass
 
 
-def wrap_displaymath(math, label, numbering):
+def wrap_displaymath(math, label):
     parts = math.split('\n\n')
     ret = []
     for i, part in enumerate(parts):
         if not part.strip():
             continue
-        ret.append(r'\begin{split}%s\end{split}' % part)
+        if label is not None and i == 0:
+            ret.append('\\begin{split}%s\\end{split}' % part +
+                       (label and '\\label{'+label+'}' or ''))
+        else:
+            ret.append('\\begin{split}%s\\end{split}\\notag' % part)
     if not ret:
         return ''
-    if label is not None or numbering:
-        env_begin = r'\begin{align}'
-        if label is not None:
-            env_begin += r'\label{%s}' % label
-        env_end = r'\end{align}'
-    else:
-        env_begin = r'\begin{align*}'
-        env_end = r'\end{align*}'
-    return ('%s\\begin{aligned}\n%s\\end{aligned}%s') % (
-        env_begin, '\\\\\n'.join(ret), env_end)
+    return '\\begin{gather}\n' + '\\\\'.join(ret) + '\n\\end{gather}'
 
 
 def math_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
@@ -121,8 +116,7 @@ def latex_visit_displaymath(self, node):
         self.body.append(node['latex'])
     else:
         label = node['label'] and node['docname'] + '-' + node['label'] or None
-        self.body.append(wrap_displaymath(node['latex'], label,
-                                          self.builder.config.math_number_all))
+        self.body.append(wrap_displaymath(node['latex'], label))
     raise nodes.SkipNode
 
 
@@ -200,11 +194,10 @@ def number_equations(app, doctree, docname):
     num = 0
     numbers = {}
     for node in doctree.traverse(displaymath):
-        if node['label'] is not None or app.config.math_number_all:
+        if node['label'] is not None:
             num += 1
             node['number'] = num
-            if node['label'] is not None:
-                numbers[node['label']] = num
+            numbers[node['label']] = num
         else:
             node['number'] = None
     for node in doctree.traverse(eqref):
@@ -215,8 +208,7 @@ def number_equations(app, doctree, docname):
 
 
 def setup_math(app, htmlinlinevisitors, htmldisplayvisitors):
-    app.add_config_value('math_number_all', False, 'html')
-    app.add_node(math, override=True,
+    app.add_node(math,
                  latex=(latex_visit_math, None),
                  text=(text_visit_math, None),
                  man=(man_visit_math, None),

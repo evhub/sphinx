@@ -20,8 +20,15 @@ from docutils.writers.html4css1 import Writer, HTMLTranslator as BaseTranslator
 
 from sphinx import addnodes
 from sphinx.locale import admonitionlabels, _
-from sphinx.util.images import get_image_size
 from sphinx.util.smartypants import sphinx_smarty_pants
+
+try:
+    from PIL import Image        # check for the Python Imaging Library
+except ImportError:
+    try:
+        import Image
+    except ImportError:
+        Image = None
 
 # A good overview of the purpose behind these classes can be found here:
 # http://www.arnebrodowski.de/blog/write-your-own-restructuredtext-writer.html
@@ -474,16 +481,21 @@ class HTMLTranslator(BaseTranslator):
             # Try to figure out image height and width.  Docutils does that too,
             # but it tries the final file name, which does not necessarily exist
             # yet at the time the HTML file is written.
-            if not ('width' in node and 'height' in node):
-                size = get_image_size(os.path.join(self.builder.srcdir, olduri))
-                if size is None:
-                    self.builder.env.warn_node('Could not obtain image size. '
-                                               ':scale: option is ignored.', node)
+            if Image and not ('width' in node and 'height' in node):
+                try:
+                    im = Image.open(os.path.join(self.builder.srcdir, olduri))
+                except (IOError,  # Source image can't be found or opened
+                        UnicodeError):  # PIL doesn't like Unicode paths.
+                    pass
                 else:
                     if 'width' not in node:
-                        node['width'] = str(size[0])
+                        node['width'] = str(im.size[0])
                     if 'height' not in node:
-                        node['height'] = str(size[1])
+                        node['height'] = str(im.size[1])
+                    try:
+                        im.fp.close()
+                    except Exception:
+                        pass
         BaseTranslator.visit_image(self, node)
 
     def visit_toctree(self, node):
@@ -627,12 +639,6 @@ class HTMLTranslator(BaseTranslator):
     def visit_termsep(self, node):
         self.body.append('<br />')
         raise nodes.SkipNode
-
-    def visit_manpage(self, node):
-        return self.visit_literal_emphasis(node)
-
-    def depart_manpage(self, node):
-        return self.depart_literal_emphasis(node)
 
     def depart_title(self, node):
         close_tag = self.context[-1]
